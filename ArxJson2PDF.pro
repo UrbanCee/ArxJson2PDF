@@ -11,7 +11,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     chardata.cpp \
-    jsonclasses.cpp
+    jsonclasses.cpp \
+    texwriter.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -26,4 +27,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
     chardata.h \
-    jsonclasses.h
+    jsonclasses.h \
+    texwriter.h
+
+RESOURCES += \
+    metadata.qrc
