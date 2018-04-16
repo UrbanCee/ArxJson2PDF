@@ -25,12 +25,47 @@ QVector<AnimalData> AnimalData::loadAnimalFile(QString filename)
     return animals;
 }
 
-
 AnimalData::AnimalData():QJsonObject(){}
 AnimalData::AnimalData(const QJsonObject &obj):QJsonObject(obj){}
 AnimalData::AnimalData(const AnimalData &anim):QJsonObject(anim){}
 
-QString AnimalData::toTexMinipageString()
+
+void AnimalData::createTexFileFromAnimalDataArray(QVector<AnimalData> &animalData, QString filename)
+{
+    QString texBody;
+    int iCurrentMinipage=0;
+    foreach(const AnimalData &data , animalData)
+    {
+        if (iCurrentMinipage>0){
+            if (iCurrentMinipage%2==1)
+            {
+                texBody.append(" \\hspace{0.1cm}\n");
+            }else if (iCurrentMinipage%4==0)
+            {
+                texBody.append("\n\n\\pagebreak\n");
+            }else{
+                texBody.append("\n\n\\vspace{0.2cm}\n");
+            }
+        }
+        texBody.append(Tex::quarterPageMiniSetup(data.toTexMinipageString()));
+        iCurrentMinipage++;
+    }
+
+    QString finalTexFile=Tex::embedIntoDocument(texBody);
+
+
+    QFile outFile(filename);
+    if ( !outFile.open(QIODevice::WriteOnly) )
+    {
+        qDebug() << "Error writing!\n";
+        return;
+    }
+
+    outFile.write(finalTexFile.toUtf8());
+}
+
+
+QString AnimalData::toTexMinipageString() const
 {
     QJsonObject metaData = readJson(":/res/MetaData_Animals.Arx.json");
     QString str;
@@ -59,7 +94,7 @@ QString AnimalData::toTexMinipageString()
         else
             str.append("\\\\\n");
     }
-    str.append("\\hline\\end{tabular}\\end{minipage}\n\n\\vspace{0.3cm}");
+    str.append("\\hline\\end{tabular}\\end{minipage}\n\n\\vspace{0.1cm}");
 
     str.append("\\begin{minipage}{0.4\\textwidth}\\begin{tabular}{|l|r@{\\em}c@{\\em}l|}\\hline\n");
     str.append("\\multicolumn{4}{|c|}{ }\\\\[-2.2ex]\n");
@@ -100,9 +135,35 @@ QString AnimalData::toTexMinipageString()
 
 
     str.append("[-2.8ex]\n\\phantom{Wahrnehmung}&\\phantom{99}&\\phantom{+}&\\phantom{\\scriptsize W12+2W6+W4}\\\\\\hline\\end{tabular}\\end{minipage}");
+    str.append("\n\n\\vspace{0.1cm}\n\n");
+
+    QJsonArray weaponsArray = obj()["Kampfwerte"].toArray();
+    QString wepTabularCreation, wepName, wepAngsAW, wepIni,webAvAngAvR,webDmg;
+    for (QJsonArray::iterator it = weaponsArray.begin(); it!=weaponsArray.end(); it++)
+    {
+        QJsonObject currObj=(*it).toObject();
+        wepTabularCreation.append("c|");
+        wepName.append(QString("&\\textbf{%1}").arg(currObj["Name"].toString()));
+        wepAngsAW.append(QString("&%1+%2").arg(currObj["Angriffsstock"].toInt()).arg(Tex::skill2Dice(currObj["Angriffsfertigkeitspunkte"].toInt())));
+        wepIni.append(QString("&%1+{\\scriptsize %2}").arg(currObj["Initiative Stock"].toInt()).arg(currObj["Initiative Würfel"].toString()));
+        webAvAngAvR.append(QString("&%1+%2").arg(currObj["Ausdauerverbrauch Angriff"].toInt()).arg(obj("Weitere Werte")["Ausdauerverbrauch Rüstung"].toInt()));
+        webDmg.append(QString("&{\\scriptsize %1}+%2").arg(currObj["Schaden Würfel"].toString()).arg(currObj["Schaden Stock"].toInt()));
 
 
-    return Tex::embedIntoDocument(Tex::quarterPageMiniSetup(str));
+    }
+
+    str.append(QString("\\begin{minipage}{1.0\\textwidth}\\begin{tabular}{|l|%1}\\hline\n").arg(wepTabularCreation));
+    str.append(QString("\\textbf{Kampfwerte}%1\\\\\\hline\n").arg(wepName));
+    str.append(QString("AngS.+AW:%1\\\\\\hline\n").arg(wepAngsAW));
+    str.append(QString("Ini:%1\\\\\\hline\n").arg(wepIni));
+    str.append(QString("AvAng+AvR:%1\\\\\\hline\n").arg(webAvAngAvR));
+    str.append(QString("Schaden:%1\\\\\\hline\n").arg(webDmg));
+    str.append("\\end{tabular}\\end{minipage}\n");
+
+
+
+
+    return str;
 }
 
 void AnimalData::createEmptyAnimalFile(QString filename)

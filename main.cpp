@@ -3,23 +3,26 @@
 
 int main(int argc, char *argv[])
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-    QString MetaFilename="MetaData_Animals.Arx.json";
-
-    //AnimalData::createEmptyAnimalFile("Animal_Template.Animal.json");
-
-    QVector<AnimalData> animals = AnimalData::loadAnimalFile("Animal_Template.Animal.json");
-
-    QFile outFile( "test.tex" );
-    if ( !outFile.open(QIODevice::WriteOnly) )
+    QTextStream out(stdout);
+    if (argc !=3)
     {
-        qDebug() << "Error writing!\n";
-        return false;
+        out << "Usage: \n\nArxJson2PDF [filename.animal.json] [TexFilename.tex]\n\n\n";
+    }else {
+        QString inFile(argv[1]);
+        QString outFile(argv[2]);
+        out << "Loading file: " << inFile << "\n";
+        QVector<AnimalData> animals = AnimalData::loadAnimalFile("Animal_Template.Animal.json");
+        //TODO verify Data
+        if (animals.size()>0)
+        {
+            out << "...Done!\n";
+        }else{
+            out << "File error or empty! ... \n";
+            return 1;
+        }
+        out << "Writing Tex file: " << outFile << "\n";
+        AnimalData::createTexFileFromAnimalDataArray(animals,outFile);
+        out << "...Done!\n\n";
     }
-
-    outFile.write(animals[0].toTexMinipageString().toUtf8());
-
-    //out << "Usage: ArxJson2PDF filename.animal.json TexFilename.tex\n";
     return 0;
 }

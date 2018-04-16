@@ -17,13 +17,16 @@ public:
     AnimalData();
     AnimalData(const QJsonObject &);
     AnimalData(const AnimalData &);
-    QString toTexMinipageString();
+    QString toTexMinipageString() const ;
 
     static void createEmptyAnimalFile(QString filename);
     static QVector<AnimalData> loadAnimalFile(QString filename);
+    static void createTexFileFromAnimalDataArray(QVector<AnimalData> &, QString filename);
 
     QJsonObject & obj(){return (*this);}
+    const QJsonObject & obj() const {return (*this);}
     QJsonObject obj(const QString &str){return obj()[str].toObject();}
+    QJsonObject obj(const QString &str)const{return QJsonObject(obj()[str].toObject());}
 };
 
 
